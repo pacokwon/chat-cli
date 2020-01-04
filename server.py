@@ -34,6 +34,10 @@ def main():
 
                 print(f"{clients[client]['data'].decode('utf-8')}> {message['data'].decode('utf-8')}")
 
+                for other_client in clients:
+                    if other_client == sock:
+                        continue
+                    send_message(other_client, clients[other_client], message['data'])
 
 def receive_message(client):
     try:
