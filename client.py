@@ -1,5 +1,5 @@
-import socket
 import errno
+import socket
 import sys
 
 HEADER_SIZE = 10
@@ -15,20 +15,25 @@ def main():
             print("Invalid username!")
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.setblocking(False)
     client.connect((HOST, PORT))
+    client.setblocking(False)
 
     send_message(client, username)
 
     while True:
-        message = input(f"{username}> ")
+        try:
+            message = input(f"{username}> ")
+        except EOFError:
+            print("\nDisconnecting...")
+            client.close()
+            sys.exit()
 
         if not message:
             while True:
                 message = receive_message(client)
                 if message is False:
                     break
-                print(f"{message[0]> message[1]}")
+                print(f"{message[0]}> {message[1]}")
             continue
 
         message = send_message(client, message)
@@ -41,16 +46,15 @@ def receive_message(client):
         message = client.recv(message_len).decode('utf-8')
 
         return user, message
+
     except IOError as e:
-        if e.error != errno.EWOULDBLOCK and e.error != errno.EAGAIN:
-            print("IOError occurred!")
-            print(e)
+        if e.errno != errno.EWOULDBLOCK and e.errno != errno.EAGAIN:
+            print("IOError occurred!", str(e))
             sys.exit()
         return False
 
     except Exception as e:
-        print("Exception occurred!")
-        print(e)
+        print("Exception occurred!", str(e))
         sys.exit()
 
 def send_message(client, data):
